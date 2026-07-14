@@ -72,7 +72,7 @@ async def main():
         while True:
             user_input = await asyncio.to_thread(input, "You: ")
             if user_input.strip().lower() in ("quit", "exit"):
-                print("\n\nExited, saving...")
+                print("\n\nExited.")
                 break
 
             print("Assistant: ", end="", flush=True)
@@ -89,7 +89,7 @@ async def main():
             print("\n")
 
     except KeyboardInterrupt:
-        print("\n\nInterrupted, saving...")
+        print("\n\nInterrupted.")
 
 
 if __name__ == "__main__":
