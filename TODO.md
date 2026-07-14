@@ -1,8 +1,12 @@
-## Base calculations at contract rate
-    - [ ] Monthly principal + interest payment: calculates the total payment for a loan based on constant payments and a constant interest rate.
-    - [ ] Amortization schedule: period-by-period split of each payment into principal vs. interest, plus remaining balance.
+## Base business layer calculations at contract rate
+    - [x] Monthly principal + interest payment: calculates the total payment for a loan based on constant payments and a constant interest rate.
+    - [x] Amortization schedule: period-by-period split of each payment into principal vs. interest, plus remaining balance.
     - [ ] Gross Debt Service (GDS): (mortgage P&I + property tax + heating + 50% of condo fees) / gross income
     - [ ] TDS (Total Debt Service): GDS + other debt obligations (car loans, credit cards, student loans) / gross income
+
+## Make the tools based on the calculations above
+    - [ ] for simplicity, replicate the same docstrings of the functions in @tool-decorated functions for agents
+    - [ ] LATER: find a way to reuse the business function docstrings
 
 ## Base Ontario market version
     - [ ] Canada-specific monthly payment: modified payment above with semi-annual compound interest, not monthly.
