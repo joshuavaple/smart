@@ -9,3 +9,12 @@ SMART - Systematic Mortgage Analysis with Responsible Thinking. An agent that sp
 - Activate conda environment: `conda activate smart`
 - Install project package: `pip install .` or `pip install -e .` for editable installation
 
+# Start the Program
+From the root folder
+- Use makefile:
+    - server: `make server`
+    - client: `make client`
+- Direct execution
+    - server: `python agent_server/start_server.py`
+    - client: `python client/client.py`
+
