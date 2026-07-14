@@ -68,29 +68,28 @@ async def main():
     conversation_id = make_session_id()
     print(f"Chat with the model (each response is capped at ~{int(MAX_TOKENS * 0.75)} words). Ctrl+C or 'quit' to exit.\n")
 
-    try:
-        while True:
-            user_input = await asyncio.to_thread(input, "You: ")
-            if user_input.strip().lower() in ("quit", "exit"):
-                print("\n\nExited.")
-                break
+    while True:
+        user_input = await asyncio.to_thread(input, "You: ")
+        if user_input.strip().lower() in ("quit", "exit"):
+            print("\n\nExited.")
+            break
 
-            print("Assistant: ", end="", flush=True)
+        print("Assistant: ", end="", flush=True)
 
-            try:
-                _full_response = await stream_chat_langchain(
-                    message=[{"role": "user", "content": user_input}],
-                    conversation_id=conversation_id,
-                )
-            except RuntimeError as e:
-                print(f"Server Error: {e}")
-                continue
+        try:
+            _full_response = await stream_chat_langchain(
+                message=[{"role": "user", "content": user_input}],
+                conversation_id=conversation_id,
+            )
+        except RuntimeError as e:
+            print(f"Server Error: {e}")
+            continue
 
-            print("\n")
-
-    except KeyboardInterrupt:
-        print("\n\nInterrupted.")
+        print("\n")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n\nInterrupted.")
