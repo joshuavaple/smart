@@ -32,8 +32,13 @@ from .utils_memory import (
 from typing import Any, AsyncGenerator, Optional
 import logging
 from fastapi import HTTPException
-from smart_tools.tools import pmt
-
+from smart_tools.tools import (
+    pmt,
+    amortization_schedule,
+    fetch_canada_property_tax_rate,
+    default_canada_property_tax_rate,
+    property_tax_amount,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +49,16 @@ load_dotenv(Path(__file__).parent.parent.parent / ".env")
 load_dotenv(Path(__file__).parent / "memory.env")
 
 # Databricks MLflow Connection via U2M Profile
-mlflow.set_tracking_uri(uri=f"databricks://{os.environ.get("DATABRICKS_CONFIG_PROFILE")}")
+mlflow.set_tracking_uri(
+    uri=f"databricks://{os.environ.get("DATABRICKS_CONFIG_PROFILE")}"
+)
 mlflow.set_experiment(experiment_name=os.environ.get("DATABRICKS_EXPERIMENT_NAME"))
 mlflow.langchain.autolog()
 
 # Workspace Client to interact with Lakebase:
-sp_workspace_client = WorkspaceClient(profile=os.environ.get("DATABRICKS_CONFIG_PROFILE"))
+sp_workspace_client = WorkspaceClient(
+    profile=os.environ.get("DATABRICKS_CONFIG_PROFILE")
+)
 
 
 # EntraID for MS Foundry LLM
@@ -93,8 +102,17 @@ def disable_nested_tracing():
 SYSTEM_PROMPT = """
 You are an expert in mortgage calculation. Only base your answer on tool execution results.
 If you don't know the answer or the question is not relevant to your role, politely decline the user.
+Be careful when handling rates. Note that the tax rate given by the user can be in percentage. In this case, convert it to float.
+E.g., given rate is 5%, rate for calculation is 0.05
 """
 
+TOOLS = [
+    pmt,
+    amortization_schedule,
+    fetch_canada_property_tax_rate,
+    default_canada_property_tax_rate,
+    property_tax_amount,
+]
 
 # The Lakebase checkpointer is request-scoped (see acquire_lakebase_resources)
 # and gets attached to `agent.checkpointer` in stream_handler before each call.
@@ -102,12 +120,13 @@ If you don't know the answer or the question is not relevant to your role, polit
 
 async def init_agent(
     # store: BaseStore,
-    checkpointer: Optional[Any] = None,   
+    checkpointer: Optional[Any] = None,
 ):
-    tools = [pmt]
+    tools = TOOLS
     return create_agent(
         client, tools=tools, system_prompt=SYSTEM_PROMPT, checkpointer=checkpointer
     )
+
 
 # implementing the ResponsesAgent interface to LangGraph agent:
 # =========================================================================================================
@@ -128,7 +147,9 @@ async def stream_handler(
     if session_id := get_session_id(request):
         mlflow.update_current_trace(metadata={"mlflow.trace.session": session_id})
 
-    messages = {"messages": to_chat_completions_input([i.model_dump() for i in request.input])}
+    messages = {
+        "messages": to_chat_completions_input([i.model_dump() for i in request.input])
+    }
 
     try:
         async with acquire_lakebase_resources(LAKEBASE_CONFIG) as (checkpointer, store):
