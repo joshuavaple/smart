@@ -46,7 +46,7 @@ def _amortization_schedule(
     annual_rate: Union[float, int],
     nper: int,
     periods_per_year: int = 12,
-    fv: Union[float, int]=0,
+    fv: Union[float, int] = 0,
     when=0,
 ) -> pd.DataFrame:
     """Build a period-by-period amortization schedule.
@@ -107,3 +107,26 @@ def _property_tax_amount(
     _validate_rate(rate)
     _validate_money_amount(assessed_value)
     return rate * assessed_value
+
+
+def _gross_debt_service(
+        mortgage_pmt, property_tax, utilities, other_expenses, gross_income
+) -> float:
+    """
+    Calculate the gross debt service ratio (GDS) of a household in a period (e.g., monthly).
+
+    Args:
+        mortgage_pmt: total mortgage payment in the period (principal and interest)
+        property_tax: proprety tax amount in the period
+        utilities: utilities amount in the period
+        other_expenses: other household expenses like phone, internet and cable in the period
+        gross_income: household income before tax in the period
+    
+    Returns:
+        The GDS ratio
+    """
+    for amount in [mortgage_pmt, property_tax, utilities, other_expenses, gross_income]:
+        _validate_money_amount(amount)
+    
+    return sum([mortgage_pmt, property_tax, utilities, other_expenses])/gross_income
+
