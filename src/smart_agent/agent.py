@@ -36,8 +36,10 @@ from smart_tools.tools import (
     pmt,
     amortization_schedule,
     fetch_canada_property_tax_rate,
-    default_canada_property_tax_rate,
+    estimate_canada_property_tax_rate,
     property_tax_amount,
+    estimate_canada_utilities_amount,
+    gross_debt_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,8 +112,10 @@ TOOLS = [
     pmt,
     amortization_schedule,
     fetch_canada_property_tax_rate,
-    default_canada_property_tax_rate,
+    estimate_canada_property_tax_rate,
     property_tax_amount,
+    estimate_canada_utilities_amount,
+    gross_debt_service,
 ]
 
 # The Lakebase checkpointer is request-scoped (see acquire_lakebase_resources)
