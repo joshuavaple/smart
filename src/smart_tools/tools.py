@@ -7,9 +7,21 @@ from finance.calculations import (
 from finance.websearch import _fetch_link_content, CANADA_PROPERTY_TAX_RATE_URL
 from finance.estimations import CANADA_PROPERTY_TAX_RATE, CANADA_TORONTO_UTILITIES
 from langchain.tools import tool
-from typing import Union
+from typing import Union, Optional
 import pandas as pd
+import uuid
+from pathlib import Path
+from core.storage import ArtifactStore
+from core.config import settings
+from core.storage import get_store
+from pydantic import BaseModel, Field
 
+
+# session/process-scoped cache mapping artifact_id -> computed DataFrame
+_DF_CACHE: dict[str, pd.DataFrame] = {}
+
+# resolved once at import time from Settings; swap backend via STORAGE_BACKEND in .env
+_store = get_store(settings)
 
 @tool
 def pmt(rate: float, nper: int, pv: Union[float, int], fv=0, when=0):
@@ -47,9 +59,56 @@ def amortization_schedule(
         A DataFrame indexed by period, with columns: payment, principal_paid,
         interest_paid, ending_balance.
     """
-    return _amortization_schedule(
+
+    df = _amortization_schedule(
         principal, annual_rate, nper, periods_per_year, fv, when
     )
+    artifact_id = uuid.uuid4().hex[:8]
+    _DF_CACHE[artifact_id] = df
+    preview = pd.concat([df.head(3), df.tail(3)])
+    return (
+        f"artifact_id: {artifact_id}\n"
+        f"{preview.to_string(index=False)}\n"
+        f"... {len(df)} periods total. Use export_dataframe(artifact_id) to save full CSV."
+    )
+
+class ExportDataframeInput(BaseModel):
+    artifact_id: str = Field(description="The ID of the file")
+    filename: Optional[str] = Field(
+        default=None,
+        description="Optional concise filename for the CSV, limit to 1-2 words separated by underscore."
+        "Defaults to '<task>_<artifact_id>.csv' if omitted where <task> is inferred from the conversation with the user, e.g., amortization, income_tax...",
+    )
+
+@tool("export_dataframe", args_schema=ExportDataframeInput)
+def export_dataframe(artifact_id: str, filename: Optional[str] = None) -> str:
+    """Export a previously computed DataFrame (by artifact_id) to CSV.
+
+    Only call this after the user has explicitly confirmed they want the
+    full data exported — do not export automatically after every
+    tool call.
+
+    Args:
+        artifact_id: The id returned by a tool.
+        filename: Optional output filename; a default is generated if omitted.
+
+    Returns:
+        The path (or URI) where the CSV was written, or an error message
+        if the artifact_id is unknown.
+    """
+    df = _DF_CACHE.get(artifact_id)
+    if df is None:
+        return (
+            f"error: no cached data found for id '{artifact_id}'. "
+            f"It may have expired or never existed — recompute with your tool."
+        )
+
+    safe_name = f"{Path(filename).name}_{artifact_id}" if filename else f"file_{artifact_id}.csv"
+    if not safe_name.endswith(".csv"):
+        safe_name += ".csv"
+
+    path = _store.write_csv(df, safe_name)
+    return f"Exported {len(df)} rows to: {path}"
 
 
 @tool
@@ -116,3 +175,5 @@ def gross_debt_service(
     return _gross_debt_service(
         mortgage_pmt, property_tax, utilities, other_expenses, gross_income
     )
+
+

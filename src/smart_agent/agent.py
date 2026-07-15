@@ -40,6 +40,7 @@ from smart_tools.tools import (
     property_tax_amount,
     estimate_canada_utilities_amount,
     gross_debt_service,
+    export_dataframe,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ TOOLS = [
     property_tax_amount,
     estimate_canada_utilities_amount,
     gross_debt_service,
+    export_dataframe,
 ]
 
 # The Lakebase checkpointer is request-scoped (see acquire_lakebase_resources)
