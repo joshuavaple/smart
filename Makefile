@@ -1,6 +1,9 @@
-.PHONY: server client
+.PHONY: server client ping
 
-server:
+ping:
+	python scripts/lakebase_ping.py
+
+server: ping
 	python agent_server/start_server.py
 
 client:
