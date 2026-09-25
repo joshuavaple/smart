@@ -161,13 +161,14 @@ def gross_debt_service(
 ) -> float:
     """
     Calculate the gross debt service ratio (GDS) of a household in a period (e.g., monthly).
-
+    Measures the percentage of your pre-tax income needed to cover your core housing costs.
+    This is a affordability stress test to see if one's earning is enough to handle a specific home purchase without risking default.
     Args:
         mortgage_pmt: total mortgage payment in the period (principal and interest)
         property_tax: proprety tax amount in the period
         utilities: utilities amount in the period
         other_expenses: other household expenses like phone, internet and cable in the period
-        gross_income: household income before tax in the period
+        gross_income: total income before tax of the individual(s) applying for the mortgage in the period
     
     Returns:
         The GDS ratio
