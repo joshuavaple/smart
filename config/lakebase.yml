@@ -1,0 +1,3 @@
+autoscaling_project: agent-memory
+autoscaling_branch: production
+agent_memory_schema: checkpoints
