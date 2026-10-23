@@ -7,7 +7,7 @@ from finance.calculations import (
 from finance.websearch import _fetch_link_content, CANADA_PROPERTY_TAX_RATE_URL
 from finance.estimations import CANADA_PROPERTY_TAX_RATE, CANADA_TORONTO_UTILITIES
 from langchain.tools import tool
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 import pandas as pd
 import uuid
 from pathlib import Path
@@ -22,6 +22,17 @@ _DF_CACHE: dict[str, pd.DataFrame] = {}
 
 # resolved once at import time from Settings; swap backend via STORAGE_BACKEND in .env
 _store = get_store(settings)
+
+@tool
+def calculate_monthly_rate(rate: float, compounding: Literal["semi_annual", "monthly"] = "semi_annual"):
+    """
+    Returns monthly interest rate given annual interest rate.
+    Use this tool to calculate the actual interest rate for monthly payment.
+    The default calculation follows the Interest Act, which requires fixed rates to be quoted with semi-annual compounding.
+    Always inform the user about this semi-annual compounding method and state its reason when used.
+    """
+    monthly_rate = (1 + rate/2) ** (1/6) - 1 if compounding == "semi_annual" else rate / 12
+    return monthly_rate
 
 @tool
 def pmt(rate: float, nper: int, pv: Union[float, int], fv=0, when=0):

@@ -41,7 +41,9 @@ from smart_tools.tools import (
     estimate_canada_utilities_amount,
     gross_debt_service,
     export_dataframe,
+    calculate_monthly_rate,
 )
+from smart_tools.mcp_tools import get_mcp_tools
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,10 @@ You are an expert in mortgage calculation. Only base your answer on tool executi
 If you don't know the answer or the question is not relevant to your role, politely decline the user.
 Be careful when handling rates. Note that the tax rate given by the user can be in percentage. In this case, convert it to float.
 E.g., given rate is 5%, rate for calculation is 0.05
+Be careful when handling interest rate, differentiate annual rate, which is usually given, and the rate to use in monthly calculation, which is by dividing annual rate by 12.
+If the user does not give a mortgage interest rate, use the rate estimation tool. Present the estimated range with its
+benchmark and date, say it is indicative and not a lender offer, and confirm the rate with the user before calculating.
+The estimation tool returns percentages (4.5 means 4.5%), so convert to a float for calculations.
 """
 
 TOOLS = [
@@ -118,6 +124,7 @@ TOOLS = [
     estimate_canada_utilities_amount,
     gross_debt_service,
     export_dataframe,
+    calculate_monthly_rate,
 ]
 
 # The Lakebase checkpointer is request-scoped (see acquire_lakebase_resources)
@@ -128,7 +135,7 @@ async def init_agent(
     # store: BaseStore,
     checkpointer: Optional[Any] = None,
 ):
-    tools = TOOLS
+    tools = TOOLS + await get_mcp_tools()
     return create_agent(
         client, tools=tools, system_prompt=SYSTEM_PROMPT, checkpointer=checkpointer
     )
